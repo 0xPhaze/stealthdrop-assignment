@@ -11,11 +11,23 @@ fn main(
   polynomial_commitment: Field,
   nullifier: pub [u8; 32],
 ) {
-  // Write your main logic here
+  // Validate signature and recover the address.
+  let key = ecrecover::secp256k1::PubKey::from_unified(pub_key);
+  let addr = key.ecrecover(signature, hashed_message);
+
+  // Ensure the nullified is a hash of the signature.
+  let hash = std::hash::blake2s(signature);
+  assert(hash == nullifier);
+
+  // Ensure the address is included in the polynomial.
+  assert(evaluate_polynomial(polynomial, addr) == 0);
+
+  // Ensure the polynomial corresponds to the polynomial commitment.
+  assert(std::hash::pedersen(polynomial)[0] == polynomial_commitment);
 }
 
 fn evaluate_polynomial(polynomial: [Field; CANDIDATES + 1], x: Field) -> Field {
-  // Write logic to evaluate polynomial here
+  polynomial[0] + polynomial[1] * x + polynomial[2] * x * x 
 }
 
 #[test]
